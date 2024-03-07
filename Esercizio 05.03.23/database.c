@@ -24,7 +24,8 @@ typedef struct DataStructure {
     Dato value;
 } DataStructure;
 
-//The following struct is able to store both type of datas (char* and int)
+// The following struct is able to store both type of datas (char* and int)
+// By also storing the related record, it is possible to fetch it with more simplicity
 typedef struct IndexNode {
     DataStructure* data;
     Persona* record;
@@ -105,6 +106,25 @@ Database * crateDatabase(){
     return db;
 }
 
+void freeNodes(IndexNode* node){
+    if (node == NULL){
+        return;
+    }
+    freeNodes(node->left);
+    freeNodes(node->right);
+    free(node->data);
+    free(node);
+}
+
+void freeDatabase(Database* database){
+    freeNodes(database->address);
+    freeNodes(database->age);
+    freeNodes(database->name);
+    freeNodes(database->surname);
+    free(database);
+}
+
+
 // Inserts a node in a orderly manner.
 IndexNode* insertNode(IndexNode* root, DataStructure* dato, Persona* p){
     if (root == NULL){
@@ -132,7 +152,7 @@ void insert(Database * database, Persona * persona){ //Si, mi piace l'OOP! Come 
 void inOrderVisit(IndexNode* node){
     if (node != NULL){
         inOrderVisit(node->left);
-        printf("INORDERVISIT: %d\n", node->data->value);
+        printf("INORDERVISIT: %s\n", node->data->value);
         inOrderVisit(node->right);
     }
 }
@@ -164,6 +184,7 @@ Persona* findByAge(Database * database, int age){
     return findByValue(database->age, (Dato)age);
 };
 
+
 /*
 Persona p1 = {"Mario", "Rossi", "Mushroom Kingdom, 10", 23};
 Persona p2 = {"Wario", "Gialli", "Mushroom Kingdom, 15", 22};
@@ -175,8 +196,10 @@ int main(){
     insert(db, &p1);
     insert(db, &p2);
     insert(db, &p3);
-    inOrderVisit(db->age);
-    printf("%s", findByAge(db, 21)->name);
+    inOrderVisit(db->surname);
+    //printf("%s", findByAge(db, 21)->name);
+    freeDatabase(db);
+    inOrderVisit(db->surname);
     return 0;
 };
 */
