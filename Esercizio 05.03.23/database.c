@@ -164,7 +164,7 @@ Persona* findByAge(Database * database, int age){
     return findByValue(database->age, (Dato)age);
 };
 
-
+/*
 Persona p1 = {"Mario", "Rossi", "Mushroom Kingdom, 10", 23};
 Persona p2 = {"Wario", "Gialli", "Mushroom Kingdom, 15", 22};
 Persona p3 = {"Luigi", "Verdi", "Mushroom Kingdom, 12", 21};
@@ -179,6 +179,6 @@ int main(){
     printf("%s", findByAge(db, 21)->name);
     return 0;
 };
-
+*/
 
 
