@@ -92,14 +92,6 @@ int dataCompare(DataStructure* a, Dato b){
     }
     return a->value.numero > b.numero ? 1 : ( a->value.numero == b.numero ) ? 0 : -1;
 }
-//Checks if the value of a DataStructure and of a raw Dato are the same.
-int dataEquals(DataStructure* a, Dato b){
-    if (a->type == STRING){
-        return ( strcmp(a->value.stringa,b.stringa) == 0 );
-    }
-    return (a->value.numero == b.numero);
-}
-
 
 
 
@@ -237,7 +229,7 @@ PersonaNode* findByValue(IndexNode* node, Dato dato){
     if(node == NULL){
         return NULL;
     }
-    if (dataEquals(node->data, dato)){
+    if (dataCompare(node->data, dato) == 0){
         return node->records;
     }
     if (dataCompare(node->data, dato) > 0){
