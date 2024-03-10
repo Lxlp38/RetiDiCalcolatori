@@ -133,7 +133,8 @@ PersonaNode* addPersonaNode(PersonaNode* root, Persona* p){
     if (root == NULL){
         return createPersonaNode(p);
     }
-    return addPersonaNode(root->next,p);
+    root->next = addPersonaNode(root->next,p);
+    return root;
 }
 
 // Initializes a Database at NULL values
@@ -157,6 +158,9 @@ IndexNode* insertNode(IndexNode* root, DataStructure* dato, Persona* p){
     }
     if (dataCompare(root->data, dato->value) == 0){
         root->records = addPersonaNode(root->records, p);
+        // since the Persona has simply been added to the records LinkedList without the need to create another IndexNode
+        // the DataStructure is not needed and can be freed
+        free(dato);
         return root;
     }
     root->right = insertNode(root->right, dato, p);
@@ -285,7 +289,7 @@ int main(){
     insert(db, &p3);
     insert(db, &p4);
     inOrderVisit(db->surname);
-    printf("%s", findByValue(db->age, (Dato)23)->persona->name);
+    printf("%s", findByValue(db->age, (Dato)23)->next->persona->name);
     freeDatabase(db);
     //inOrderVisit(db->surname);
     return 0;
