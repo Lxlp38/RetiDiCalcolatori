@@ -149,12 +149,9 @@ Database * crateDatabase(){
 // Inserts a node in a orderly manner.
 IndexNode* insertNode(IndexNode* root, DataStructure* dato, Persona* p){
     if (root == NULL){
-        //printf("Creazione - %d\n", dato->value);
-        //mio debug, non ci faccia caso che prima stava esplodendo tutto e volevo esplodere anche io
         return createNode(dato, p);
     }
-    if (dataCompare(root->data, dato->value) > 0){ // If this is >0, it means that the value of the current node is greater, so our own is placed left
-        //printf("Inserimento Sinistro- %d\n", dato->value);
+    if (dataCompare(root->data, dato->value) > 0){
         root->left = insertNode(root->left, dato, p);
         return root;
     }
@@ -162,12 +159,11 @@ IndexNode* insertNode(IndexNode* root, DataStructure* dato, Persona* p){
         root->records = addPersonaNode(root->records, p);
         return root;
     }
-    //printf("Inserimento Destro- %d\n", dato->value);
     root->right = insertNode(root->right, dato, p);
     return root;
 }
 
-void insert(Database * database, Persona * persona){ //Si, mi piace l'OOP! Come ha fatto a capirlo?!?!
+void insert(Database * database, Persona * persona){
     database->address = insertNode(database->address, datafy((Dato)persona->address, STRING), persona);
     database->age = insertNode(database->age, datafy((Dato)persona->age, INTEGER), persona);
     database->name = insertNode(database->name, datafy((Dato)persona->name, STRING), persona);
