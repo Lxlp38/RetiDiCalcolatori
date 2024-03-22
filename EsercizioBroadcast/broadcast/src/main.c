@@ -57,6 +57,13 @@ NeighborNode* createNeighborNode(NeighborNode* root, int id, int value){
     return createNeighborNode(root->next, id, value);
 }
 
+typedef struct Message{
+    int oid;
+    int timestamp;
+    int lastid;
+    int payload;
+} Message;
+
 // typedef union NodeType{
 //     NeighborNode* neighbor;
 //     MessageNode* message;
@@ -151,6 +158,7 @@ int main(int argc, char *argv[])
     NeighborNode* history = NULL;
     int timestamp = 0;
     int oid, otimestamp, lid;
+    Message* message;
 
     memset(buffer, '\0', BUFFSIZE);
     memset(tempbuffer, '\0', BUFFSIZE);
@@ -217,27 +225,27 @@ int main(int argc, char *argv[])
 
     printf("Server started\n");
 
-    if(id==0){
-        sleep(2);
-        formatMessage(buffer,id,id,timestamp);
-        printf("Init: Sending %s message back to broadcast\n", buffer);
-        sendto(sock, buffer, BUFFSIZE, 0, (struct sockaddr*) &broadcast_addr, addr_len);
-        timestamp++;
-    }
-
-
-
     signal(SIGALRM,killProcess);
     alarm(5);
 
+    if(id==0){
+        sleep(1);
+        //formatMessage(buffer,id,id,timestamp);
+        Message newmessage = {id, timestamp, id, 0};
+        printf("Init: Sending %d %d %d message back to broadcast\n", newmessage.oid, newmessage.timestamp, newmessage.lastid);
+        sendto(sock, (Message*)&newmessage, sizeof(Message), 0, (struct sockaddr*) &broadcast_addr, addr_len);
+        timestamp++;
+    }
+
     while (1)
     {
-        lid = 0;
-        oid = 0;
-        otimestamp = 0;
+        // lid = 0;
+        // oid = 0;
+        // otimestamp = 0;
         memset(buffer, '\0', BUFFSIZE);
         memset(tempbuffer, '\0', BUFFSIZE);
-        count = recvfrom(sock, buffer, BUFFSIZE, 0, NULL, NULL);
+        message = calloc(1, sizeof(Message));
+        count = recvfrom(sock, message, sizeof(Message), 0, NULL, NULL);
         if (count < 0){
             perror("Could not receive message\n");
             continue;
@@ -246,25 +254,27 @@ int main(int argc, char *argv[])
         readHistory(history);
 
 
-        printf("Message lenght: %d, Buffer is: %s\n", count, buffer);
-        strcpy(tempbuffer,buffer);
-        readMessage(tempbuffer,&oid,&otimestamp,&lid);
-        printf("Client connection information:\t Id: %d\n", lid);
+        //printf("Message lenght: %d, Buffer is: %s\n", count, buffer);
+        //strcpy(tempbuffer,buffer);
+        //readMessage(tempbuffer,&oid,&otimestamp,&lid);
+        printf("Client connection information:\t Id: %d\ttimestamp: %d\tlid: %d\n", message->oid, message->timestamp, message->lastid);
 
-        if(valueinarray(lid,neighbors,argc-2) == 0){
-            printf("Node %d is not a neighbor, skipping.\n", lid);
+        if(valueinarray(message->lastid,neighbors,argc-2) == 0){
+            printf("Node %d is not a neighbor, skipping.\n", message->lastid);
             continue;
         }
 
-        if(oid == id || searchHistory(history,oid,otimestamp) == 1){
-            printf("Node %d sent a duplicate message: %s. Skipping\n", lid, buffer);
+        if(message->oid == id || searchHistory(history,message->oid,message->timestamp) == 1){
+            printf("Node %d sent a duplicate message: %d. Skipping\n", message->lastid, message->payload);
             continue;
         }
-        printf("Input node %d is a neighbor\n", lid);
-        history = createNeighborNode(history,oid,otimestamp);
-        formatMessage(buffer,oid,id,otimestamp);
-        printf("Sending %s message back to broadcast\n", buffer);
-        sendto(sock, buffer, BUFFSIZE, 0, (struct sockaddr *)&broadcast_addr, addr_len);
+        printf("Input node %d is a neighbor\n", message->lastid);
+        history = createNeighborNode(history,message->oid,message->timestamp);
+        //formatMessage(buffer,oid,id,otimestamp);
+        Message newmessage = {message->oid, message->timestamp, id, 0};
+        free(message);
+        printf("Sending %d message back to broadcast\n", newmessage.payload);
+        sendto(sock, (Message*)&newmessage, sizeof(Message), 0, (struct sockaddr *)&broadcast_addr, addr_len);
     }
 
     // End
