@@ -31,7 +31,8 @@ MessageNode* createMessageNode(MessageNode* root, int value){
         node->value = value;
         return node;
     }
-    return createMessageNode(root->next, value);
+    root->next = createMessageNode(root->next, value);
+    return root;
 }
 
 
@@ -54,7 +55,8 @@ NeighborNode* createNeighborNode(NeighborNode* root, int id, int value){
         root->messages = createMessageNode(root->messages,value);
         return root;
     }
-    return createNeighborNode(root->next, id, value);
+    root->next = createNeighborNode(root->next, id, value);
+    return root;
 }
 
 typedef struct Message{
@@ -151,8 +153,12 @@ int main(int argc, char *argv[])
     int oid, otimestamp, lid;
     Message* message;
 
+    setvbuf(stdout, NULL, _IONBF, 0);
+
     memset(buffer, '\0', BUFFSIZE);
     memset(tempbuffer, '\0', BUFFSIZE);
+    
+    setvbuf(stdout, NULL, _IONBF, 0);
 
     id = atoi(argv[1]);
 
@@ -177,7 +183,7 @@ int main(int argc, char *argv[])
     //     return -1;
     // }
 
-    ret = setsockopt(sock, SOL_SOCKET, SO_BROADCAST, (char *)&optval, sizeof(optval));
+    ret = setsockopt(sock, SOL_SOCKET, SO_BROADCAST, (int*)&optval, sizeof(optval));
     if (ret == -1)
     {
         perror("setsockopt error\n");
