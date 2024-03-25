@@ -14,6 +14,8 @@
 #include <signal.h>
 #include <sys/time.h>
 #include <time.h>
+#include <asm-generic/socket.h>
+//#include <asm-generic/socket.h>
 
 #define PORT 9999
 #define DURATION 20
@@ -168,13 +170,13 @@ void TrafficGenerator(int fildes[2], int signalstart[2]){
     int timestamp = 0;
 
     if(id == 0){
-        sleep(10);
+        //sleep(10);
         //Message message = {0, -2, 10};
         //write(fildes[1],(Message*)&message, sizeof(Message));
     }
     else{
         int ciao = 0;
-        read(signalstart[0],&ciao,sizeof(int));
+        //read(signalstart[0],&ciao,sizeof(int));
     }
     //Message startmessage = {0, -2, ciao};
     //write(fildes[1],(Message*)&startmessage,sizeof(Message));
@@ -229,8 +231,19 @@ void Broadcaster(int fildes[2]){
             printf("\n");
             break;
         }
+        struct ifaddrs *addrs, *tmp;
+        getifaddrs(&addrs);
+        tmp = addrs;
+        while (tmp) {
+            if (tmp->ifa_addr && tmp->ifa_addr->sa_family == AF_PACKET) {
+                setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, tmp->ifa_name, sizeof(tmp->ifa_name));
+                sendto(sock, message, sizeof(Message), 0, (struct sockaddr*) &broadcast_addr, sizeof(struct sockaddr_in));
+            }
+            tmp = tmp->ifa_next;
+        }
+        freeifaddrs(addrs);
         //printf("Broadcasting %d %d %d message\n", message->id, message->timestamp, message->payload);
-        sendto(sock, message, sizeof(Message), 0, (struct sockaddr*) &broadcast_addr, sizeof(struct sockaddr_in));
+        //sendto(sock, message, sizeof(Message), 0, (struct sockaddr*) &broadcast_addr, sizeof(struct sockaddr_in));
     }
     Message EOS = {id, -1, 0};
     sendto(sock, (struct Message*)&EOS, sizeof(Message), 0, (struct sockaddr*) &broadcast_addr, sizeof(struct sockaddr_in));
@@ -275,10 +288,10 @@ void TrafficReceiver(int fildes[2], int signalstart[2], int outputfds[2]){
             perror("Could not receive message\n");
             continue;
         }
-        if (started == 0){
-            started = 1;
-            write(signalstart[1],(int*)&message->payload,sizeof(int));
-        }
+        // if (started == 0){
+        //     started = 1;
+        //     write(signalstart[1],(int*)&message->payload,sizeof(int));
+        // }
         // if(started == 0 && message->id == 0 && message->timestamp == -2){
         //     started = 1;
         //     printf("Traffic Receiver: received start message\n");
@@ -351,7 +364,7 @@ void TrafficAnalyzer(int fildes[2]){
         }
     }
     for(int i = 0; i < NODEN; i++){
-        printThroughputNode(nodevalues, time, i);
+        printThroughputNode(nodevalues, time-1, i);
     }
     close(fildes[0]);
     printf("Stopped: Traffic Analyzer\n");
