@@ -16,7 +16,7 @@
 #include <time.h>
 
 #define PORT 9999
-#define DURATION 5
+#define DURATION 20
 #define NODEN 10
 
 int id;
@@ -153,6 +153,10 @@ void printThroughputNode(int** nodevalues, int time, int node){
     if(node != NODEN-1){
         printf(", ");
     }
+    else{
+        printf("\n");
+    }
+    
     
     
 }
@@ -180,7 +184,7 @@ void TrafficGenerator(int fildes[2], int signalstart[2]){
 
     for(int i = 0; i < (DURATION*1000000)/10000; i++){
         Message message = {id, timestamp, rand()};
-        printf("Sending %d %d %d to be broadcasted\n", message.id, message.timestamp, message.payload);
+        //printf("Sending %d %d %d to be broadcasted\n", message.id, message.timestamp, message.payload);
         write(fildes[1],(Message*)&message, sizeof(Message));
         timestamp++;
         usleep(10000);
@@ -225,7 +229,7 @@ void Broadcaster(int fildes[2]){
             printf("\n");
             break;
         }
-        printf("Broadcasting %d %d %d message\n", message->id, message->timestamp, message->payload);
+        //printf("Broadcasting %d %d %d message\n", message->id, message->timestamp, message->payload);
         sendto(sock, message, sizeof(Message), 0, (struct sockaddr*) &broadcast_addr, sizeof(struct sockaddr_in));
     }
     Message EOS = {id, -1, 0};
@@ -287,13 +291,13 @@ void TrafficReceiver(int fildes[2], int signalstart[2], int outputfds[2]){
         }
 
         if(history[message->id] < message->timestamp){
-            printf("Received %d %d %d\n", message->id, message->timestamp, message->payload);
+            //printf("Received %d %d %d\n", message->id, message->timestamp, message->payload);
             history[message->id] = message->timestamp;
             write(fildes[1], (int*)&message->id, sizeof(int));
             write(outputfds[1], message, sizeof(Message));
         }
         else{
-            printf("Received duplicate %d %d\n", message->id , message->timestamp);
+            //printf("Received duplicate %d %d\n", message->id , message->timestamp);
         }
         
     }
@@ -326,21 +330,23 @@ void TrafficAnalyzer(int fildes[2]){
         int input;
         int check = 0;
         read(fildes[0], &input, sizeof(int));
-        printf("Traffic Analyzer: received %d\n", input);
+        //printf("Traffic Analyzer: received %d\n", input);
         if( input == -1){
-            printf("Traffic Analizer: received EOS");
+            //printf("Traffic Analizer: received EOS");
             break;
         }
         nodevalues[time][input]++;
         if (input == id){
             mypack++;
-            if (mypack+1%100 == 0){
-                printf("PORCODIOOOOOOO %d\n", mypack);
+            if ((mypack+1)%100 == 0){
                 for(int i = 0; i < NODEN; i++){
                     printThroughputNode(nodevalues, time, i);
                 }
                 time++;
-                printf("Traffic Analizer, time increased to %d\n", time+1);
+                if (time >= DURATION-1){
+                    break;
+                }
+                //printf("Traffic Analizer, time increased to %d\n", time+1);
             }
         }
     }
